@@ -7,6 +7,11 @@ using System.Drawing;
 using Newtonsoft.Json;
 
 namespace CardDownloader {
+    public class Misc
+    {
+        public int? question_atk { get; set; }
+        public int? question_def { get; set; }
+    }
     public class CardDB
     {
         public string? name { get; set; }
@@ -20,8 +25,7 @@ namespace CardDownloader {
         public int? level { get; set; }
         public int? scale { get; set; }
         public int? linkval { get; set; }
-        public int? question_atk { get; set; }
-        public int? question_def { get; set; }
+        public List<Misc> misc_info { get; set; }
         public List<string> linkmarkers { get; set; }
         public List<CardImages> card_images { get; set; }
     }
@@ -38,7 +42,7 @@ namespace CardDownloader {
         public static string path = "./pics/";
         public static string fieldpath = "./pics/field/";
         public static string framepath = "./frames and icons/";
-        public static string artworks = "https://storage.googleapis.com/ygoprodeck.com/pics_artgame/{0}.jpg";
+        public static string artworks = "https://images.ygoprodeck.com/images/cards_cropped/{0}.jpg";
         public static Image removeBlackBox (Image artwork)
         {
             if (((Bitmap)artwork).GetPixel(0, artwork.Height - 1) == Color.FromArgb(255,0,0,0) && ((Bitmap)artwork).GetPixel(artwork.Width/2, artwork.Height - 1) == Color.FromArgb(255, 0, 0, 0) && ((Bitmap)artwork).GetPixel(artwork.Width - 1, artwork.Height - 1) == Color.FromArgb(255, 0, 0, 0))
@@ -54,7 +58,6 @@ namespace CardDownloader {
                         {
                             g.DrawImage(artwork, 0, 0);
                         }
-                        cropped.Save("./whatisthis.jpg");
                         return cropped;
                     }
                 }
@@ -172,7 +175,7 @@ namespace CardDownloader {
                                 {
                                     Font souvenir = new Font("Souvenir-Light", 65);
                                     Font linkSouvenir = new Font("Souvenir-Light", 65, FontStyle.Bold);
-                                    if (card.question_atk == 1)
+                                    if (card.misc_info[0].question_atk == 1)
                                     {
                                         centerAlignText(merge, "?", souvenir, Color.Black, new Point(177, 813));
                                     }
@@ -191,7 +194,7 @@ namespace CardDownloader {
                                 else if (!card.name.Contains("The Winged Dragon of Ra"))
                                 {
                                     Font souvenir = new Font("Souvenir-Light", 65);
-                                    if (card.question_atk == 1)
+                                    if (card.misc_info[0].question_atk == 1)
                                     {
                                         centerAlignText(merge, "?", souvenir, Color.Black, new Point(177, 815));
                                     }
@@ -199,7 +202,7 @@ namespace CardDownloader {
                                     {
                                         centerAlignText(merge, card.atk.ToString(), souvenir, Color.Black, new Point(177, 815));
                                     }
-                                    if (card.question_def == 1)
+                                    if (card.misc_info[0].question_def == 1)
                                     {
                                         centerAlignText(merge, "?", souvenir, Color.Black, new Point(477, 815));
                                     }
