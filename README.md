@@ -1,0 +1,1 @@
+"# EDOPro-Anime-Card-Generator" 
