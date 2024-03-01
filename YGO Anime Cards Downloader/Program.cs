@@ -273,7 +273,6 @@ namespace CardDownloader {
                                 blank.Save(path + card.card_images[art].id + ".jpg");
                                 if (validateImages(card.card_images[art].id + ".jpg", card.type))
                                 {
-                                    art++;
                                     if (card.card_images.Count > 1)
                                     {
                                         Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded");
@@ -282,6 +281,7 @@ namespace CardDownloader {
                                     {
                                         Console.WriteLine(card.name + " has been downloaded");
                                     }
+                                    if (!saveMc) { art++; }
                                 }
                                 else
                                 {
@@ -294,17 +294,12 @@ namespace CardDownloader {
                                         Console.WriteLine(card.name + " failed to download. Retrying...");
                                     }
                                 }
-                                if (saveMc)
-                                {
-                                    art = 0;
-                                }
                             }
                             if (saveMc)
                             {
                                 blank.Save(mcpath + card.card_images[art].id + "_0.jpg");
                                 if (validateMcImages(card.card_images[art].id + "_0.jpg", card.type))
                                 {
-                                    art++;
                                     if (card.card_images.Count > 1)
                                     {
                                         Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for Minecraft");
@@ -313,6 +308,7 @@ namespace CardDownloader {
                                     {
                                         Console.WriteLine(card.name + " has been downloaded for Minecraft");
                                     }
+                                    art++;
                                 }
                                 else
                                 {
