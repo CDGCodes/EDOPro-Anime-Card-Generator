@@ -105,7 +105,7 @@ namespace CardDownloader {
                 return false;
             }
         }
-        public static bool validateSkullImages(string filename)
+        public static bool validateScrollImages(string filename)
         {
             try
             {
@@ -120,7 +120,7 @@ namespace CardDownloader {
                 return false;
             }
         }
-        public static void constructSkullImage(int cardId, Image card) {
+        public static void constructScrollImage(int cardId, Image card) {
             Image template = Image.FromFile(framepath + "skullTemplate.png");
             var blank = new Rectangle(0, 0, 336, 490);
             using (Graphics g = Graphics.FromImage(template)) {
@@ -129,7 +129,7 @@ namespace CardDownloader {
             template.Save(skullpath + cardId + ".png");
 
         }
-        public static void constructImage(CardDB card, bool saveMc, bool saveEdo, bool saveSkull)
+        public static void constructImage(CardDB card, bool saveMc, bool saveEdo, bool saveScroll)
         {
             using (WebClient webClient = new WebClient())
             {
@@ -139,8 +139,8 @@ namespace CardDownloader {
                     {
                         bool buildForEdo = (saveEdo && !validateImages(card.card_images[art].id + ".jpg", card.race));
                         bool buildForMc = (saveMc && !validateMcImages(card.card_images[art].id + "_0.jpg"));
-                        bool buildForSkull = (saveSkull && !validateSkullImages(card.card_images[art].id + ".png"));
-                        if (buildForEdo || buildForMc || buildForSkull) {
+                        bool buildForScroll = (saveScroll && !validateScrollImages(card.card_images[art].id + ".png"));
+                        if (buildForEdo || buildForMc || buildForScroll) {
                             byte[] img = webClient.DownloadData(String.Format(artworks, card.card_images[art].id));
                             Image artwork;
                             Image blank = (Image)new Bitmap(653, 941);
@@ -338,7 +338,7 @@ namespace CardDownloader {
                                     {
                                         Console.WriteLine(card.name + " has been downloaded for YDM");
                                     }
-                                    if (!buildForSkull) { art++; }
+                                    if (!buildForScroll) { art++; }
                                 }
                                 else
                                 {
@@ -352,17 +352,17 @@ namespace CardDownloader {
                                     }
                                 }
                             }
-                            if (buildForSkull)
+                            if (buildForScroll)
                             {
-                                constructSkullImage(card.card_images[art].id, blank);
-                                if (validateSkullImages(card.card_images[art].id + ".png")) {
+                                constructScrollImage(card.card_images[art].id, blank);
+                                if (validateScrollImages(card.card_images[art].id + ".png")) {
                                     if (card.card_images.Count > 1)
                                     {
-                                        Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for Skull's Minecraft Mod");
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for Scroll's Minecraft Mod");
                                     }
                                     else
                                     {
-                                        Console.WriteLine(card.name + " has been downloaded for Skull's Minecraft Mod");
+                                        Console.WriteLine(card.name + " has been downloaded for Scroll's Minecraft Mod");
                                     }
                                     art++;
                                 }
@@ -370,11 +370,11 @@ namespace CardDownloader {
                                 {
                                     if (card.card_images.Count > 1)
                                     {
-                                        Console.WriteLine(card.name + " #" + (art + 1) + " failed to download for Skull's Minecraft Mod. Retrying...");
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " failed to download for Scroll's Minecraft Mod. Retrying...");
                                     }
                                     else
                                     {
-                                        Console.WriteLine(card.name + " failed to download for Skull's Minecraft Mod. Retrying...");
+                                        Console.WriteLine(card.name + " failed to download for Scroll's Minecraft Mod. Retrying...");
                                     }
                                 }
                             }
@@ -432,17 +432,17 @@ namespace CardDownloader {
                 mcresponse = Console.ReadLine();
             }
             bool saveMc = (mcresponse == "Y" || mcresponse == "y");
-            Console.WriteLine("Do you want to save your images for Skull's Minecraft mod? Y/N");
+            Console.WriteLine("Do you want to save your images for Scroll's Minecraft mod? Y/N");
             string skullresponse = Console.ReadLine();
             while (skullresponse != "Y" && skullresponse != "N" && skullresponse != "y" && skullresponse != "n")
             {
                 Console.WriteLine("Invalid input, please try again");
-                Console.WriteLine("Do you want to save your images for Skull's Minecraft mod? Y/N");
+                Console.WriteLine("Do you want to save your images for Scroll's Minecraft mod? Y/N");
                 skullresponse = Console.ReadLine();
             }
-            bool saveSkull = (skullresponse == "Y" || skullresponse == "y");
+            bool saveScroll = (skullresponse == "Y" || skullresponse == "y");
             bool saveEDO;
-            if (saveMc || saveSkull)
+            if (saveMc || saveScroll)
             {
                 Console.WriteLine("Do you want to save your images for EDOPro as well? Y/N");
                 string edoresponse = Console.ReadLine();
@@ -473,7 +473,7 @@ namespace CardDownloader {
             {
                 DirectoryInfo di = Directory.CreateDirectory(mcpath);
             }
-            if (saveSkull && !Directory.Exists(skullpath))
+            if (saveScroll && !Directory.Exists(skullpath))
             {
                 DirectoryInfo di = Directory.CreateDirectory(skullpath);
             }
@@ -489,7 +489,7 @@ namespace CardDownloader {
                                     }
                                 }*/
 #pragma warning disable CA1416 // Validate platform compatibility
-                constructImage(DB.data[i], saveMc, saveEDO, saveSkull);
+                constructImage(DB.data[i], saveMc, saveEDO, saveScroll);
             }       
 #pragma warning restore CA1416 // Validate platform compatibility
         }
