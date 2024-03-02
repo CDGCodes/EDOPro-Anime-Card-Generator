@@ -5,6 +5,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Drawing;
 using Newtonsoft.Json;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
 
 namespace CardDownloader {
     public class Misc
@@ -44,6 +46,7 @@ namespace CardDownloader {
         public static string fieldpath = "./pics/field/";
         public static string framepath = "./frames and icons/";
         public static string mcpath = "./raw/";
+        public static string skullpath = "./skull/";
         public static string artworks = "https://images.ygoprodeck.com/images/cards_cropped/{0}.jpg";
         public static Image removeBlackBox (Image artwork)
         {
@@ -51,7 +54,7 @@ namespace CardDownloader {
             {
                 for (int i = 2; i < artwork.Height; i++)
                 {
-                    if (!(((Bitmap)artwork).GetPixel(0, artwork.Height-i) == Color.FromArgb(255, 0, 0, 0) || ((Bitmap)artwork).GetPixel(artwork.Width-1, artwork.Height-i) == Color.FromArgb(255, 0, 0, 0)))
+                    if (!(((Bitmap)artwork).GetPixel(0, artwork.Height-i) == Color.FromArgb(255, 0, 0, 0) && ((Bitmap)artwork).GetPixel(artwork.Width-1, artwork.Height-i) == Color.FromArgb(255, 0, 0, 0)))
                     {
                         Rectangle cropArea = new Rectangle(new Point(0, 0), new Size(artwork.Width, artwork.Height - i));
                         Image cropped = (Image)new Bitmap(cropArea.Width, cropArea.Height);
@@ -87,7 +90,7 @@ namespace CardDownloader {
                 return false;
             }
         }
-        public static bool validateMcImages(string filename, string type)
+        public static bool validateMcImages(string filename)
         {
             try
             {
@@ -102,7 +105,31 @@ namespace CardDownloader {
                 return false;
             }
         }
-        public static void constructImage(CardDB card, bool saveMc, bool saveEdo)
+        public static bool validateSkullImages(string filename)
+        {
+            try
+            {
+                using (var bmp = new Bitmap(skullpath + filename))
+                {
+
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public static void constructSkullImage(int cardId, Image card) {
+            Image template = Image.FromFile(framepath + "skullTemplate.png");
+            var blank = new Rectangle(0, 0, 336, 490);
+            using (Graphics g = Graphics.FromImage(template)) {
+                g.DrawImage(card, 449, 463, 336, 490);
+            }
+            template.Save(skullpath + cardId + ".png");
+
+        }
+        public static void constructImage(CardDB card, bool saveMc, bool saveEdo, bool saveSkull)
         {
             using (WebClient webClient = new WebClient())
             {
@@ -110,7 +137,10 @@ namespace CardDownloader {
                 {
                     try
                     {
-                        if (!validateImages(card.card_images[art].id + ".jpg", card.race)) {
+                        bool buildForEdo = (saveEdo && !validateImages(card.card_images[art].id + ".jpg", card.race));
+                        bool buildForMc = (saveMc && !validateMcImages(card.card_images[art].id + "_0.jpg"));
+                        bool buildForSkull = (saveSkull && !validateSkullImages(card.card_images[art].id + ".png"));
+                        if (buildForEdo || buildForMc || buildForSkull) {
                             byte[] img = webClient.DownloadData(String.Format(artworks, card.card_images[art].id));
                             Image artwork;
                             Image blank = (Image)new Bitmap(653, 941);
@@ -169,12 +199,12 @@ namespace CardDownloader {
                             {
                                 frame = Image.FromFile(framepath + card.frameType + ".png");
                             }
-                                ((Bitmap)blank).SetResolution(artwork.HorizontalResolution, artwork.VerticalResolution);
+                            ((Bitmap)blank).SetResolution(artwork.HorizontalResolution, artwork.VerticalResolution);
                             ((Bitmap)frame).SetResolution(artwork.HorizontalResolution, artwork.VerticalResolution);
                             Graphics merge = Graphics.FromImage(blank);
                             merge.DrawImage(artwork, 14, 15);
                             merge.DrawImage(frame, 0, 0);
-                            if (!card.type.Contains("Pendulum") && card.desc.Contains("[ Pendulum Effect ]"))
+                            if (!card.type.Contains("Pendulum") && card.desc.Contains("[ Pendulum Effect ]") && !card.name.StartsWith("Supreme King Z-ARC"))
                             {
                                 Image missingPendulum = Image.FromFile(framepath + "Pendulum Frame Fix.png");
                                 ((Bitmap)missingPendulum).SetResolution(artwork.HorizontalResolution, artwork.VerticalResolution);
@@ -268,7 +298,7 @@ namespace CardDownloader {
                                     centerAlignText(merge, card.scale.ToString(), souvenir, Color.Black, new Point(604, 633));
                                 }
                             }
-                            if (saveEdo)
+                            if (buildForEdo)
                             {
                                 blank.Save(path + card.card_images[art].id + ".jpg");
                                 if (validateImages(card.card_images[art].id + ".jpg", card.type))
@@ -281,7 +311,7 @@ namespace CardDownloader {
                                     {
                                         Console.WriteLine(card.name + " has been downloaded");
                                     }
-                                    if (!saveMc) { art++; }
+                                    if (!buildForMc) { art++; }
                                 }
                                 else
                                 {
@@ -295,18 +325,44 @@ namespace CardDownloader {
                                     }
                                 }
                             }
-                            if (saveMc)
+                            if (buildForMc)
                             {
                                 blank.Save(mcpath + card.card_images[art].id + "_0.jpg");
-                                if (validateMcImages(card.card_images[art].id + "_0.jpg", card.type))
+                                if (validateMcImages(card.card_images[art].id + "_0.jpg"))
                                 {
                                     if (card.card_images.Count > 1)
                                     {
-                                        Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for Minecraft");
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for YDM");
                                     }
                                     else
                                     {
-                                        Console.WriteLine(card.name + " has been downloaded for Minecraft");
+                                        Console.WriteLine(card.name + " has been downloaded for YDM");
+                                    }
+                                    if (!buildForSkull) { art++; }
+                                }
+                                else
+                                {
+                                    if (card.card_images.Count > 1)
+                                    {
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " failed to download for YDM. Retrying...");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine(card.name + " failed to download for YDM. Retrying...");
+                                    }
+                                }
+                            }
+                            if (buildForSkull)
+                            {
+                                constructSkullImage(card.card_images[art].id, blank);
+                                if (validateSkullImages(card.card_images[art].id + ".png")) {
+                                    if (card.card_images.Count > 1)
+                                    {
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " has been downloaded for Skull's Minecraft Mod");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine(card.name + " has been downloaded for Skull's Minecraft Mod");
                                     }
                                     art++;
                                 }
@@ -314,11 +370,11 @@ namespace CardDownloader {
                                 {
                                     if (card.card_images.Count > 1)
                                     {
-                                        Console.WriteLine(card.name + " #" + (art + 1) + " failed to download for Minecraft. Retrying...");
+                                        Console.WriteLine(card.name + " #" + (art + 1) + " failed to download for Skull's Minecraft Mod. Retrying...");
                                     }
                                     else
                                     {
-                                        Console.WriteLine(card.name + " failed to download for Minecraft. Retrying...");
+                                        Console.WriteLine(card.name + " failed to download for Skull's Minecraft Mod. Retrying...");
                                     }
                                 }
                             }
@@ -367,17 +423,26 @@ namespace CardDownloader {
             string sLine = DBReader.ReadLine();
             //Console.WriteLine(sLine);
             YGODB DB = JsonConvert.DeserializeObject<YGODB>(sLine);
-            Console.WriteLine("Do you want to save your images for Minecraft? Y/N");
+            Console.WriteLine("Do you want to save your images for the YDM Minecraft mod? Y/N");
             string mcresponse = Console.ReadLine();
             while (mcresponse != "Y" && mcresponse != "N" && mcresponse != "y" && mcresponse != "n")
             {
                 Console.WriteLine("Invalid input, please try again");
-                Console.WriteLine("Do you want to save your images for Minecraft? Y/N");
+                Console.WriteLine("Do you want to save your images for the YDM Minecraft mod? Y/N");
                 mcresponse = Console.ReadLine();
             }
             bool saveMc = (mcresponse == "Y" || mcresponse == "y");
+            Console.WriteLine("Do you want to save your images for Skull's Minecraft mod? Y/N");
+            string skullresponse = Console.ReadLine();
+            while (skullresponse != "Y" && skullresponse != "N" && skullresponse != "y" && skullresponse != "n")
+            {
+                Console.WriteLine("Invalid input, please try again");
+                Console.WriteLine("Do you want to save your images for Skull's Minecraft mod? Y/N");
+                skullresponse = Console.ReadLine();
+            }
+            bool saveSkull = (skullresponse == "Y" || skullresponse == "y");
             bool saveEDO;
-            if (saveMc)
+            if (saveMc || saveSkull)
             {
                 Console.WriteLine("Do you want to save your images for EDOPro as well? Y/N");
                 string edoresponse = Console.ReadLine();
@@ -404,26 +469,27 @@ namespace CardDownloader {
                     DirectoryInfo di = Directory.CreateDirectory(fieldpath);
                 }
             }
-            if (saveMc)
+            if (saveMc && !Directory.Exists(mcpath))
             {
-                if (!Directory.Exists(mcpath))
-                {
-                    DirectoryInfo di = Directory.CreateDirectory(mcpath);
-                }
+                DirectoryInfo di = Directory.CreateDirectory(mcpath);
+            }
+            if (saveSkull && !Directory.Exists(skullpath))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(skullpath);
             }
 
             for (int i = 0; i < DB.data.Count; i++)
             {
-/*                if (DB.data[i].race == "Field" && !File.Exists(fieldpath + DB.data[i].id + ".jpg"))
-                {
-                    using (WebClient webClient = new WebClient())
-                    {
-                        byte[] img = webClient.DownloadData(String.Format(artworks, DB.data[i].id));
-                        File.WriteAllBytes(fieldpath + DB.data[i].id + ".jpg", img);
-                    }
-                }*/
+                /*                if (DB.data[i].race == "Field" && !File.Exists(fieldpath + DB.data[i].id + ".jpg"))
+                                {
+                                    using (WebClient webClient = new WebClient())
+                                    {
+                                        byte[] img = webClient.DownloadData(String.Format(artworks, DB.data[i].id));
+                                        File.WriteAllBytes(fieldpath + DB.data[i].id + ".jpg", img);
+                                    }
+                                }*/
 #pragma warning disable CA1416 // Validate platform compatibility
-                constructImage(DB.data[i], saveMc, saveEDO);
+                constructImage(DB.data[i], saveMc, saveEDO, saveSkull);
             }       
 #pragma warning restore CA1416 // Validate platform compatibility
         }
